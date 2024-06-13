@@ -5,7 +5,6 @@
 ################################################################################
 ###################################################################### libraries
 
-
 .libPaths(c( .libPaths(), "/tools/aws-workspace-apps/ce/R/4.2.1"))
 .libPaths(c( .libPaths(), "/tools/aws-workspace-apps/ce/R/4.0.2"))
 .libPaths(c( .libPaths(), "/re_gecip/cancer_lung/R_packages_4_1/"))
@@ -46,6 +45,7 @@ for(i in all_files){
   
   print(i)
   df <- read.delim(i)
+  df <- df[df$is_driver == TRUE, ]
   df <- df[df$var_class != "amp", ]
   df <- df[df$var_class != "hom.del.", ]
   df <- unique(df[, c("participant_id", "gene_name", "gr_id", "key")])
@@ -58,8 +58,6 @@ rownames(SNV_driver) <- c(1:nrow(SNV_driver))
 SNV_driver <- unique(SNV_driver)
 SNV_driver$gene_gr <- paste0(SNV_driver$gene_name, ":", SNV_driver$gr_id)
 
-
-# first let's recreate the bubble plot of number coding / non-coding driver
 # how many coding / non-coding driver mutations does each tumour have?
 SNV_driver[SNV_driver$gr_id == "CDS", "class"] <- "coding" 
 SNV_driver[SNV_driver$gr_id != "CDS", "class"] <- "non_coding" 
@@ -80,47 +78,6 @@ missing_tumours_df <- data.frame(participant_id = missing_tumours,
                                  non_coding = 0)
 
 driver_count_mat <- rbind(driver_count_mat, missing_tumours_df)
-
-# calculate average number of drivers
-sum(driver_count_mat$coding) / nrow(driver_count_mat)
-sum(driver_count_mat$non_coding) / nrow(driver_count_mat)
-(sum(driver_count_mat$coding) + sum(driver_count_mat$non_coding)) / nrow(driver_count_mat)
-nrow(driver_count_mat[driver_count_mat$coding != 0 | driver_count_mat$non_coding != 0,]) / nrow(driver_count_mat)
-nrow(driver_count_mat[driver_count_mat$coding != 0 & driver_count_mat$non_coding != 0,]) / nrow(driver_count_mat)
-nrow(driver_count_mat[driver_count_mat$coding != 0 & driver_count_mat$non_coding == 0,]) / nrow(driver_count_mat)
-nrow(driver_count_mat[driver_count_mat$coding == 0 & driver_count_mat$non_coding != 0,]) / nrow(driver_count_mat)
-
-driver_count_class <- data.frame(table(driver_count_mat[, c("coding", "non_coding")]))
-
-# no make this into a plot
-
-# bin Freq
-driver_count_class <- driver_count_class %>% mutate(Freq_bin = cut(Freq, breaks=c(0, 5, 10, 25, 50, 75, 100, 150, 200, 218)))
-
-
-p_bubble <- ggplot() +
-  geom_point(data = driver_count_class[driver_count_class$Freq > 0, ], aes(coding, non_coding, color = Freq_bin, size = Freq)) +
-  geom_text(data = driver_count_class[driver_count_class$Freq >= 5, ], aes(coding, non_coding, label = Freq), color = "black", vjust = -1) +
-  scale_color_manual(name = "# tumours", values = c("#41ab5d", "#006837", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")) +
-  scale_size_continuous(name = "# tumours") +
-  xlab("Number of coding cancer gene mutations") +
-  ylab("Number of non coding cancer gene mutations") +
-  theme_bw()
-
-pdf(paste0(output_path, "number_coding_vs_noncoding_SNV_driver.pdf"), width = 5, height = 4)
-p_bubble
-dev.off()
-
-# check histologies
-sample_table$participant_id <- as.character(sample_table$participant_id)
-driver_count_hist<- left_join(driver_count_mat, sample_table[, c("participant_id", "histology")])
-
-# are these enriched for certain histologies
-
-driver_count_hist[driver_count_hist$non_coding > 0 & driver_count_hist$coding == 0, "only_non_coding"] <- TRUE
-driver_count_hist[is.na(driver_count_hist$only_non_coding), "only_non_coding"] <- FALSE
-
-
 
 
 # now let's check what happens when we also take SVs and copy number into account and fusions and germline
@@ -194,7 +151,6 @@ germline_gene_split <- germline_gene_split[germline_gene_split$second_hit == TRU
 colnames(germline_gene_split) <- c("participant_id", "germline")
 germline_gene_split$germline <- "germline"
 
-
 driver_count_mat[driver_count_mat$coding >= 1, "coding"] <- "coding_SNV"
 driver_count_mat[driver_count_mat$non_coding >= 1, "non_coding"] <- "noncoding_SNV"
 driver_count_mat[driver_count_mat$coding == 0, "coding"] <- NA
@@ -221,6 +177,7 @@ sample_table$participant_id <- as.character(sample_table$participant_id)
 driver <- left_join(driver, sample_table[, c("participant_id", "histology")])
 driver <- unique(driver)
 
+
 # make a bar plot only for those tumours that don't have a SNV driver
 no_driver <- driver[which(is.na(driver$coding) & is.na(driver$non_coding)), ]
 
@@ -233,7 +190,7 @@ no_driver_count[no_driver_count$class == "no_driver", "group"] <- "no driver"
 no_driver_count[no_driver_count$class != "no_driver", "group"] <- "driver"
 
 no_driver_count$group <- factor(no_driver_count$group, levels = c("no driver", "driver"))
-no_driver_count$class <- factor(no_driver_count$class, levels = c("no_driver", "CN", "SV_CN", "SV", "fusion", "CN_fusion"))
+no_driver_count$class <- factor(no_driver_count$class, levels = c("no_driver", "CN", "SV_CN", "SV", "CN_fusion", "CN_germline", "fusion", "germline"))
 
 no_driver_count_class_only <- no_driver_count %>% group_by(class) %>% summarise(sum(Freq))
 no_driver_count_class_only[no_driver_count_class_only$class == "no_driver", "group"] <- "no driver"
@@ -251,51 +208,53 @@ no_driver_count$histology <- factor(no_driver_count$histology, levels = c("ADENO
                                                                           "MET_SMALL_CELL",
                                                                           "NEUROENDOCRINE_CARCINOMA",
                                                                           "OTHER"))
-
 p_no_driver <- ggplot() +
-  geom_bar(data = no_driver_count, aes(class, Freq, fill = histology), stat = "identity") +
-  geom_text(data = no_driver_count_class_only, aes(class, `sum(Freq)`, label = `sum(Freq)`, vjust = -0.2)) +
-  scale_fill_manual(values = c("ADENOCARCINOMA" = "#67001f",   
-                               "MET_ADENOCARCINOMA" = "#67001f80",
-                               "SQUAMOUS_CELL" = "#053061",
-                               "MET_SQUAMOUS_CELL" = "#05306180",
-                               "ADENOSQUAMOUS" = "#66c2a5",
-                               "CARCINOID" = "#fc8d62",
-                               "MESOTHELIOMA" = "#e3309e",
-                               "SMALL_CELL" = "#b89704",
-                               "MET_SMALL_CELL" = "#b8970480",
-                               "NEUROENDOCRINE_CARCINOMA" = "#0b8ca3",
-                               "OTHER" = "#7a7979"),
-                    labels = c("Adenocarcinoma",
-                               "Adenocarcinoma\nmetastasis",
-                               "Squamous cell",
-                               "Squamous cell\nmetastasis",
-                               "Adenosquamous",
-                               "Carcinoid",
-                               "Mesothelioma",
-                               "Small cell",
-                               "Small cell\nmetastasis",
-                               "Neuroendocrine\ncarcinoma",
-                               "Other",
-                               "Other\nmetastasis")) +
-  theme_bw() +
-  xlab("") +
-  ylab("# tumours") +
-  facet_grid(.~group, scales = "free_x", space = "free_x") +
-  scale_x_discrete(labels = c("no_driver" = "no driver",
-                              "CN" = "CN", 
-                              "SV_CN" = "CN+SV", 
-                              "SV" = "SV",
-                              "fusion" = "fusion",
-                              "CN_fusion" = "CN+fusion")) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
-        panel.grid.major.x = element_blank(),
-        panel.grid.major.y = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        strip.background = element_rect(fill="white"))
+                    geom_bar(data = no_driver_count, aes(class, Freq, fill = histology), stat = "identity") +
+                    geom_text(data = no_driver_count_class_only, aes(class, `sum(Freq)`, label = `sum(Freq)`, vjust = -0.2)) +
+                    scale_fill_manual(values = c("ADENOCARCINOMA" = "#67001f",   
+                                                 "MET_ADENOCARCINOMA" = "#67001f80",
+                                                 "SQUAMOUS_CELL" = "#053061",
+                                                 "MET_SQUAMOUS_CELL" = "#05306180",
+                                                 "ADENOSQUAMOUS" = "#66c2a5",
+                                                 "CARCINOID" = "#fc8d62",
+                                                 "MESOTHELIOMA" = "#e3309e",
+                                                 "SMALL_CELL" = "#b89704",
+                                                 "MET_SMALL_CELL" = "#b8970480",
+                                                 "NEUROENDOCRINE_CARCINOMA" = "#0b8ca3",
+                                                 "OTHER" = "#7a7979"),
+                                      labels = c("Adenocarcinoma",
+                                                 "Adenocarcinoma\nmetastasis",
+                                                 "Squamous cell",
+                                                 "Squamous cell\nmetastasis",
+                                                 "Adenosquamous",
+                                                 "Carcinoid",
+                                                 "Mesothelioma",
+                                                 "Small cell",
+                                                 "Small cell\nmetastasis",
+                                                 "Neuroendocrine\ncarcinoma",
+                                                 "Other",
+                                                 "Other\nmetastasis")) +
+                    theme_bw() +
+                    xlab("") +
+                    ylab("# tumours") +
+                    facet_grid(.~group, scales = "free_x", space = "free_x") +
+                    scale_x_discrete(labels = c("no_driver" = "no driver",
+                                                "CN" = "CN", 
+                                                "SV_CN" = "CN+SV", 
+                                                "SV" = "SV",
+                                                "CN_fusion" = "CN+fusion",
+                                                "CN_germline" = "CN+germline",
+                                                "fusion" = "fusion",
+                                                "germline" = "germline")) +
+                    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+                          panel.grid.major.x = element_blank(),
+                          panel.grid.major.y = element_blank(),
+                          panel.grid.minor.x = element_blank(),
+                          panel.grid.minor.y = element_blank(),
+                          strip.background = element_rect(fill="white"))
 
 
 pdf(paste0(output_path, "number_no_SNV_driver.pdf"), width = 5, height = 5)
 p_no_driver
 dev.off()
+

@@ -145,27 +145,6 @@ for(subtype in unique(results$tumor_subtype)){
   
   element_order <- c("CDS(SNV)", "CDS(SV)", "CDS(SNV, SV)", "CN")
   
-  # for(i in 1:nrow(results_mat)){
-  #   
-  #   x <- as.character(results_mat[i, c("gr_id_1", "gr_id_2")])
-  #   results_mat[i, "gr_id1_order"] <- x[order(match(x, element_order))][[1]]
-  #   results_mat[i, "gr_id2_order"] <- x[order(match(x, element_order))][[2]]
-  # }
-  # 
-  # results_mat[results_mat$gr_id_1 == results_mat$gr_id1_order, "gene1_order"] <- results_mat[results_mat$gr_id_1 == results_mat$gr_id1_order, "gene_id_1"] 
-  # results_mat[results_mat$gr_id_2 == results_mat$gr_id2_order, "gene2_order"] <- results_mat[results_mat$gr_id_2 == results_mat$gr_id2_order, "gene_id_2"] 
-  # results_mat[results_mat$gr_id_1 == results_mat$gr_id2_order, "gene1_order"] <- results_mat[results_mat$gr_id_1 == results_mat$gr_id2_order, "gene_id_2"] 
-  # results_mat[results_mat$gr_id_2 == results_mat$gr_id1_order, "gene2_order"] <- results_mat[results_mat$gr_id_2 == results_mat$gr_id1_order, "gene_id_1"] 
-  # 
-  # results_mat <- results_mat %>% arrange(gr_id1_order, gene1_order)
-  # results_mat <- results_mat %>% arrange(gr_id2_order, desc(gene2_order))
-  # 
-  # results_mat$gr_id1_order <- factor(results_mat$gr_id1_order, levels = element_order)
-  # results_mat$gr_id2_order <- factor(results_mat$gr_id2_order, levels = element_order)
-  # results_mat$gene1_order <- factor(results_mat$gene1_order, levels = unique(results_mat$gene1_order))
-  # results_mat$gene2_order <- factor(results_mat$gene2_order, levels = unique(results_mat$gene2_order))
-  
-  
   
   results_mat$gene_gr_1 <- paste0(results_mat$gr_id_1, ":", results_mat$gene_id_1)
   results_mat$gene_gr_2 <- paste0(results_mat$gr_id_2, ":", results_mat$gene_id_2)
@@ -199,8 +178,7 @@ for(subtype in unique(results$tumor_subtype)){
     dplyr::mutate(gene_id_2 = factor(gene_id_2, levels = unique(gene_id_2))) %>%
     filter(!is.na(log10p))
   
-  
-  # results_mat <- results_mat[!is.na(results_mat$log10p), ]
+
   coding_sig <- tmp[tmp$plotLab != "", ]
   
   p_cod <- ggplot(tmp, aes(forcats::fct_rev(gene_id_1), gene_id_2, fill = log10p, label = plotLab)) +
@@ -350,29 +328,6 @@ for(subtype in unique(results$tumor_subtype)){
   
   element_order <- c("CDS(SNV)", "CDS(SV)", "CDS(SNV, SV)", "CN", "enhancer(SNV)", "ss(SNV)", "enhancer(SV)", "3primeUTR(SNV)", "5primeUTR(SNV)", "promoter(SNV)", "lincRNA_promoter(SNV)", "lincRNA(SNV)")
   
-  
-  # for(i in 1:nrow(results_mat)){
-  #   
-  #   x <- as.character(results_mat[i, c("gr_id_1", "gr_id_2")])
-  #   results_mat[i, "gr_id1_order"] <- x[order(match(x, element_order))][[1]]
-  #   results_mat[i, "gr_id2_order"] <- x[order(match(x, element_order))][[2]]
-  # }
-  # 
-  # results_mat[results_mat$gr_id_1 == results_mat$gr_id1_order, "gene1_order"] <- results_mat[results_mat$gr_id_1 == results_mat$gr_id1_order, "gene_id_1"] 
-  # results_mat[results_mat$gr_id_2 == results_mat$gr_id2_order, "gene2_order"] <- results_mat[results_mat$gr_id_2 == results_mat$gr_id2_order, "gene_id_2"] 
-  # results_mat[results_mat$gr_id_1 == results_mat$gr_id2_order, "gene1_order"] <- results_mat[results_mat$gr_id_1 == results_mat$gr_id2_order, "gene_id_2"] 
-  # results_mat[results_mat$gr_id_2 == results_mat$gr_id1_order, "gene2_order"] <- results_mat[results_mat$gr_id_2 == results_mat$gr_id1_order, "gene_id_1"] 
-  # 
-  # results_mat <- results_mat %>% arrange(gr_id1_order, gene1_order)
-  # results_mat <- results_mat %>% arrange(gr_id2_order, desc(gene2_order))
-  # 
-  # results_mat$gr_id1_order <- factor(results_mat$gr_id1_order, levels = element_order)
-  # results_mat$gr_id2_order <- factor(results_mat$gr_id2_order, levels = element_order)
-  # results_mat$gene1_order <- factor(results_mat$gene1_order, levels = unique(results_mat$gene1_order))
-  # results_mat$gene2_order <- factor(results_mat$gene2_order, levels = unique(results_mat$gene2_order))
-  
-  
-  
   results_mat$gene_gr_1 <- paste0(results_mat$gr_id_1, ":", results_mat$gene_id_1)
   results_mat$gene_gr_2 <- paste0(results_mat$gr_id_2, ":", results_mat$gene_id_2)
   
@@ -406,7 +361,6 @@ for(subtype in unique(results$tumor_subtype)){
     filter(!is.na(log10p))
   
   all_sig <- tmp[tmp$plotLab != "", ]
-  # results_mat <- results_mat[!is.na(results_mat$log10p), ]
   
   p_all <- ggplot(tmp, aes(forcats::fct_rev(gene_id_1), gene_id_2, fill = log10p, label = plotLab)) +
     geom_tile() +
@@ -436,69 +390,3 @@ for(subtype in unique(results$tumor_subtype)){
   dev.off()
   
 }  
-  
-################################################################################
-# get numbers
-
-
-
-
-results <- read.table(results_path, head = T, sep = "\t")
-# only keep the results from testing coding
-results <- results %>% filter(comparison == "all")
-# where a pancan pair is not supported by the individual subtype, remove the asterics
-results[which(results$support_by_indivTT == FALSE), "plotLab"] <- ""
-pancan_all_sig <- results[results$tumor_subtype == "PANCAN" & results$plotLab != "", ]
-LUAD_all_sig <- results[results$tumor_subtype == "Adenocarcinoma" & results$plotLab != "", ]
-LUSC_all_sig <- results[results$tumor_subtype == "Squamous_cell" & results$plotLab != "", ]
-
-results <- read.table(results_path, head = T, sep = "\t")
-# only keep the results from testing coding
-results <- results %>% filter(comparison == "cod")
-# where a pancan pair is not supported by the individual subtype, remove the asterics
-results[which(results$support_by_indivTT == FALSE), "plotLab"] <- ""
-pancan_cod_sig <- results[results$tumor_subtype == "PANCAN" & results$plotLab != "", ]
-LUAD_cod_sig <- results[results$tumor_subtype == "Adenocarcinoma" & results$plotLab != "", ]
-LUSC_cod_sig <- results[results$tumor_subtype == "Squamous_cell" & results$plotLab != "", ]
-  
-# compare all vs coding PANCAN 
-pancan_cod_sig$ID <- paste0(pancan_cod_sig$gr_id_1, ":", pancan_cod_sig$gene_id_1, ":", pancan_cod_sig$gr_id_2, ":", pancan_cod_sig$gene_id_2)
-pancan_all_sig$ID    <- paste0(pancan_all_sig$gr_id_1, ":", pancan_all_sig$gene_id_1, ":", pancan_all_sig$gr_id_2, ":", pancan_all_sig$gene_id_2)
-
-table(pancan_cod_sig$ID %in% pancan_all_sig$ID)
-pancan_cod_sig$ID[pancan_cod_sig$ID %in% pancan_all_sig$ID]
-pancan_cod_sig$ID[!pancan_cod_sig$ID %in% pancan_all_sig$ID]
-
-table(pancan_all_sig$ID %in% pancan_cod_sig$ID)
-pancan_all_sig$ID[pancan_all_sig$ID %in% pancan_cod_sig$ID]
-pancan_all_sig$ID[!pancan_all_sig$ID %in% pancan_cod_sig$ID]
-
-pancan_all_sig$gene_gr1 <- paste0(pancan_all_sig$gene_id_1, ":", pancan_all_sig$gr_id_1)
-pancan_all_sig$gene_gr2 <- paste0(pancan_all_sig$gene_id_2, ":", pancan_all_sig$gr_id_2)
-length(unique(c(unique(pancan_all_sig$gene_gr1)), unique(pancan_all_sig$gene_gr2)))
-table(pancan_all_sig$gene_gr1)
-table(pancan_all_sig$gene_gr2)
-
-
-
-all_sig[all_sig$log10p < 0,"type"] <- "exclusivity"
-all_sig[all_sig$log10p > 0,"type"] <- "cooccurrence"
-
-table(as.character(all_sig$gene_id_1))
-table(as.character(all_sig$gene_id_2))
-
-all_sig[all_sig$gene_id_1 == "KRAS" | all_sig$gene_id_2 == "KRAS", ]
-
-# how many genes in total
-all_sig$gene_gr1 <- paste0(all_sig$gr_id_1, ";", all_sig$gene_id_1)
-all_sig$gene_gr2 <- paste0(all_sig$gr_id_2, ";", all_sig$gene_id_2)
-
-all_elements <- c(unique(all_sig$gene_gr1), unique(all_sig$gene_gr2))
-
-coocc  <- all_sig[all_sig$type == "cooccurrence", ]
-table(as.character(coocc$gene_id_1))
-table(as.character(coocc$gene_id_2))
-table(as.character(coocc$gr_id_1))
-table(as.character(coocc$gr_id_2))
-
-mut  <- all_sig[all_sig$type == "exclusivity", ]

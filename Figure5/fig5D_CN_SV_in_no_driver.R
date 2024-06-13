@@ -49,8 +49,7 @@ SV_driver_sample <- unique(SV_driver_sample[,c("participant_id", "gene_name")])
 SV_count <- data.frame(table(SV_driver_sample$gene_name))
 SV_count$type <- "SV"
 
-# for copy number need to be careful not to count the same peak that was found in adenos and in pancan twice
-# maybe just use pancan peaks for this
+# use pancan peaks for this
 
 CN_driver_sample <- CN_driver_sample[grep("PANCAN", CN_driver_sample$new_peak_name), ]
 CN_driver_sample$name <- paste0(CN_driver_sample$new_peak_name, ":", CN_driver_sample$significant_CN_genes_on_peak)

@@ -72,7 +72,7 @@ smoking$participant_id <- as.character(smoking$participant_id)
 SV_exposure <- left_join(SV_exposure, smoking[, c("participant_id", "classifier")], by = c("sample" = "participant_id"))
 
 
-# do this as well for all signatures
+# do this for all signatures
 # and adjust for SV burden
 mutburden <- readRDS(mutburden_path)
 SV_exposure <- left_join(SV_exposure, mutburden[, c("sample", "SVcount")])
@@ -155,7 +155,6 @@ fish_df_all$signature <- factor(fish_df_all$signature, levels = unique(fish_df_a
 p_odd <- ggplot(fish_df_all, aes(x = signature, y = odds_ratio_flip, color = enriched_in, alpha = is_significant)) + 
   geom_pointrange(aes(ymin = loCI_flip, ymax = hiCI_flip)) +
   scale_color_manual(values = c("#7ad8fa","#46788a"), labels = c("inferred\nnon-smoker", "inferred\nsmoker"), name = "enriched in") +
-  # scale_y_log10() +
   scale_alpha_manual(values = c(0.4, 1), labels = c("not significant", "significant"), name = "") +
   geom_hline(yintercept = 1, linetype = "dashed", color = "blue", linewidth = 0.2) +
   theme_bw() +

@@ -175,23 +175,6 @@ histology_names <- c("Carcinoid",
 
 names(histology_names) <- hist_order
 
-# p_hist <- ggplot(count_hist, aes(corrected_smoking_status, prop, fill = corrected_smoking_status)) +
-#   geom_bar(stat = "identity") +
-#   ylab("% samples") +
-#   xlab(" ") +
-#   scale_fill_manual(values = c("#7ad8fa","#46788a")) +
-#   scale_x_discrete(labels = c("low\nsmoking\nsignature", "high\nsmoking\nsignatures")) +
-#   facet_wrap(~histology, ncol = 1, strip.position = "right", labeller = labeller(histology = histology_names)) +
-#   theme_bw() +
-#   theme(axis.title.x = element_blank(),
-#         axis.title.y = element_text(size = 14),
-#         axis.text.x = element_text(size = 14, angle = 45, vjust = 1, hjust = 1),
-#         panel.spacing = unit(0.1, 'lines'),
-#         plot.margin = unit(c(0.1,0.5,0.5,0.5), "cm"),
-#         strip.text.y = element_text(angle = 0),
-#         legend.position = "none",
-#         strip.background =element_rect(fill="white"))
-
 p_hist <- ggplot(count_hist, aes(histology, prop, fill = corrected_smoking_status)) +
   geom_bar(stat = "identity") +
   ylab("% samples") +
@@ -221,36 +204,7 @@ pdf(paste0(output_path, "smoking_proportion_histology.pdf"), width = 9, height =
 p_hist
 dev.off()
 
-count_sex <- data.frame(table(counts[, c("corrected_smoking_status", "sex")]))
-smoke_count <- data.frame(table(counts$corrected_smoking_status))
-colnames(smoke_count) <- c("corrected_smoking_status", "total_smoke_count")
-count_sex <- left_join(count_sex, smoke_count)
-count_sex$prop <- (count_sex$Freq / count_sex$total_smoke_count)*100
-count_sex$biological_sex <- "sex"
 
-p_sex <- ggplot(count_sex, aes(corrected_smoking_status, prop, fill = sex)) +
-  geom_bar(stat = "identity") +
-  ylab("% samples") +
-  xlab(" ") +
-  scale_fill_manual(values = c("pink", "lightblue")) +
-  facet_wrap(~biological_sex, nrow = 1, strip.position = "right") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 14, angle = 0),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.spacing = unit(0.1, 'lines'),
-        plot.margin = unit(c(0.5,0.5,0,0.5), "cm"),
-        strip.text.y = element_text(angle = 0),
-        strip.background =element_rect(fill="white"),
-        legend.position = "top")
-
-# make into one plot
-p_all <- plot_grid(p_sex, p_hist, align = "v", axis = "lr", rel_heights = c(1, 7), ncol = 1)
-
-pdf(paste0(output_path, "supp_fig2_smoking_characterisation.pdf"), width = 4, height = 10)
-p_all
-dev.off()
 
 # get driver gene mutations
 cancer_gene_muts <- read.csv(cancer_gene_mut_path, head = T, sep = "\t")
@@ -364,27 +318,9 @@ gene_test[which(gene_test$p_adjust > 0.05), "significance"] <- ""
 gene_test <- gene_test[order(gene_test$significance,
                              gene_test$odds_ratio,
                              decreasing = T), ]
-# gene_test_p <- gene_test[, c("gene_element", "smoker", "non_smoker", "significance")]
-# gene_test_p <- melt(gene_test_p, id.vars = c("gene_element", "significance"))
+
 gene_test$gene_element <- factor(gene_test$gene_element, levels = unique(gene_test$gene_element))
-# gene_test_p$value_log <- log10(gene_test_p$value)
 
-# only plot significant ones
-# gene_test_p <- gene_test_p[gene_test_p$significance != "", ]
-
-# p <- ggplot(data = gene_test_p, aes(gene_element, variable, fill = variable, alpha = value_log)) +
-#             geom_tile(color = "grey") +
-#             geom_text(aes(label = significance), color = "black", size = 3) +
-#             scale_fill_manual(values=c(non_smoker="#7ad8fa", smoker="#46788a"), labels = c("low\nsmoking\nsignature", "high\nsmoking\nsignatures")) +
-#             scale_y_discrete(labels=c("smoker" = "high\nsmoking\nsignatures", "non_smoker" = "low\nsmoking\nsignature")) +
-#             theme_bw() +
-#             theme(axis.text.x = element_text(size = 12),
-#                   axis.text.y = element_text(size = 12),
-#                   panel.grid.minor = element_blank(),
-#                   panel.grid.major = element_blank(),) +
-#             xlab("") +
-#             ylab("") +
-#             coord_flip()
 
 gene_test[gene_test$odds_ratio < 1, "enriched_in"] <- "smoker"
 gene_test[gene_test$odds_ratio >= 1, "enriched_in"] <- "non_smoker"
@@ -409,176 +345,3 @@ p <- ggplot(gene_test, aes(x = gene_element, y = odds_ratio, color = enriched_in
 pdf(paste0(output_path, "supp_fig2_smoking_driver.pdf"), width = 14, height = 4)
 p
 dev.off()
-
-# is this still significant when adjusting for mutation burden
-# gene_mat <- EGFR_muts
-# gene_mat$val <- TRUE
-# gene_mat <- dcast(gene_mat, participant_id ~ gene_cat, value.var = "val")
-# gene_mat[is.na(gene_mat)] <- FALSE
-# 
-# # add the patients that don't have mutations in any of these genes
-# missing_samples <- sample_table[-which(sample_table$participant_id %in% gene_mat$participant_id), "participant_id"]
-# add <- matrix(data = FALSE, nrow = length(missing_samples), ncol = ncol(gene_mat), )
-# colnames(add) <- colnames(gene_mat)
-# rownames(add) <- missing_samples
-# add <- data.frame(add)
-# add$participant_id <- missing_samples
-# colnames(add) <- sub("\\.", "-", colnames(add))
-# 
-# gene_mat <- rbind(gene_mat, add)
-# 
-# mutburden <- readRDS(patient_mutburden_path)
-# mutburden$SBS_DBS_ID_mutburden <- mutburden$SBScount + mutburden$DBScount + mutburden$IDcount
-# 
-# gene_mat <- left_join(gene_mat, mutburden[, c("sample", "SBS_DBS_ID_mutburden")], by = c("participant_id" = "sample"))
-# 
-# # add smoking classifier
-# 
-# gene_mat <- left_join(gene_mat, unique(all[, c("sample", "classifier")]), by = c("participant_id" = "sample"))
-#                       
-# gene_mat[gene_mat$EGFR_CDS == FALSE, "EGFR_CDS"] <- "no_mutation"
-# gene_mat[gene_mat$EGFR_CDS == TRUE, "EGFR_CDS"] <- "mutation"             
-# 
-# gene_mat[gene_mat$KRAS_CDS == FALSE, "KRAS_CDS"] <- "no_mutation"
-# gene_mat[gene_mat$KRAS_CDS == TRUE, "KRAS_CDS"] <- "mutation" 
-# 
-# gene_mat[gene_mat$TP53_CDS == FALSE, "TP53_CDS"] <- "no_mutation"
-# gene_mat[gene_mat$TP53_CDS == TRUE, "TP53_CDS"] <- "mutation" 
-# 
-# gene_mat[gene_mat$KEAP1_CDS == FALSE, "KEAP1_CDS"] <- "no_mutation"
-# gene_mat[gene_mat$KEAP1_CDS == TRUE, "KEAP1_CDS"] <- "mutation" 
-# 
-# gene_mat[gene_mat$RB1_CDS == FALSE, "RB1_CDS"] <- "no_mutation"
-# gene_mat[gene_mat$RB1_CDS == TRUE, "RB1_CDS"] <- "mutation" 
-# 
-# gene_mat[gene_mat$NOTCH1_CDS == FALSE, "NOTCH1_CDS"] <- "no_mutation"
-# gene_mat[gene_mat$NOTCH1_CDS == TRUE, "NOTCH1_CDS"] <- "mutation" 
-# 
-# gene_mat[gene_mat$STK11_CDS == FALSE, "STK11_CDS"] <- "no_mutation"
-# gene_mat[gene_mat$STK11_CDS == TRUE, "STK11_CDS"] <- "mutation" 
-# 
-# gene_mat[gene_mat$NFE2L2_CDS == FALSE, "NFE2L2_CDS"] <- "no_mutation"
-# gene_mat[gene_mat$NFE2L2_CDS == TRUE, "NFE2L2_CDS"] <- "mutation" 
-# 
-# gene_mat[gene_mat$ARID1A_CDS == FALSE, "ARID1A_CDS"] <- "no_mutation"
-# gene_mat[gene_mat$ARID1A_CDS == TRUE, "ARID1A_CDS"] <- "mutation" 
-# 
-# gene_mat[gene_mat$ZNF578_enhancer == FALSE, "ZNF578_enhancer"] <- "no_mutation"
-# gene_mat[gene_mat$ZNF578_enhancer == TRUE, "ZNF578_enhancer"] <- "mutation" 
-# 
-#                       
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(EGFR_CDS) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-# 
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(KRAS_CDS) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-# 
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(TP53_CDS) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-# 
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(KEAP1_CDS) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-# 
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(RB1_CDS) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-# 
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(NOTCH1_CDS) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-# 
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(STK11_CDS) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-# 
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(NFE2L2_CDS) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-# 
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(ARID1A_CDS) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-# 
-# model <- glm(data = gene_mat, as.factor(classifier) ~ as.factor(ZNF578_enhancer) + SBS_DBS_ID_mutburden,
-#              family = "binomial")
-
-
-# add the corrected smoking status to overall smoking table
-# smoking_table <- left_join(smoking_table, all, by = c("participant_id" = "sample"))
-# smoking_table$smoking_status.y <- NULL
-# colnames(smoking_table)[2] <- "reported_smoking_status"
-# 
-# write.table(smoking_table, paste0(output_file, "smoking_data.txt"), sep = "\t", row.names = F, quote = F)
-
-# how many smoking associated mutations are there in the 9 non-smoking LUSCs?
-non_smoker_LUSCs <- all[all$classifier == "non_smoker" & all$histology == "SQUAMOUS_CELL", ]
-median_non_smoker_LUSC <- median(non_smoker_LUSCs$total_smoking_exposure)
-  
-smoker_LUSCs <- all[all$classifier == "smoker" & all$histology == "SQUAMOUS_CELL", ]
-median_smoker_LUSCs <- median(smoker_LUSCs$total_smoking_exposure)
-
-# how many mutations are there in total in the non-smoker LUSCs
-patient_mutburden <- readRDS(patient_mutburden_path)
-patient_mutburden$total_mutburden <- patient_mutburden$SBScount + patient_mutburden$IDcount + patient_mutburden$DBScount
-
-med_non_smoker_LUSC_mutburden <-   median(patient_mutburden[patient_mutburden$sample %in% non_smoker_LUSCs$sample, "total_mutburden"])
-med_smoker_LUSC_mutburden     <-   median(patient_mutburden[patient_mutburden$sample %in% smoker_LUSCs$sample, "total_mutburden"])
-
-#################################################################################
-# test for survival differencesf of patients with EGFR mutations in group 2 and not i group2 
-cancer_gene_muts <- read.csv(cancer_gene_mut_path, head = T, sep = "\t")
-cancer_gene_muts <- cancer_gene_muts[cancer_gene_muts$var_class != "amp", ]
-cancer_gene_muts <- cancer_gene_muts[cancer_gene_muts$var_class != "hom.del.", ]
-cancer_gene_muts <- unique(cancer_gene_muts[, c("participant_id", "gene_name", "gr_id", "key")])
-cancer_gene_muts$gene_cat <- paste0(cancer_gene_muts$gene_name, "_", cancer_gene_muts$gr_id)
-EGFR_gene_muts <- cancer_gene_muts[cancer_gene_muts$gene_name == "EGFR", ]
-EGFR_gene_muts <- unique(EGFR_gene_muts[, c("participant_id", "gene_name"), ])
-
-# add sigantuer clusters
-cluster_assignment <- read.table(signature_cluster_path, head = T, sep = "\t")
-EGFR_gene_muts <- left_join(EGFR_gene_muts, cluster_assignment, by = c("participant_id" = "variable"))
-EGFR_gene_muts$participant_id <- as.character(EGFR_gene_muts$participant_id)
-
-# add survival data
-survival <- readRDS(survival_path)
-survival$participant_id <- as.character(survival$participant_id)
-survival$survival <- sub(" days", "", survival$survival)
-survival$survival <- as.numeric(survival$survival)
-survival <- survival[survival$participant_id %in% sample_table$participant_id, ]
-survival <- survival[survival$disease_type == "LUNG", ]
-
-EGFR_gene_muts <- left_join(EGFR_gene_muts, survival)
-
-# make a flag of being in lcuster 2 or not
-EGFR_gene_muts[EGFR_gene_muts$cluster_assignment == 2, "cluster2"] <- TRUE
-EGFR_gene_muts[EGFR_gene_muts$cluster_assignment != 2, "cluster2"] <- FALSE
-
-# add histology
-EGFR_gene_muts <- left_join(EGFR_gene_muts, sample_table[, c("participant_id", "histology")])
-
-# add stage
-
-clinical <- read.table(clin_data_path, head = T, sep = "\t")
-clinical$participant_id <- as.character(clinical$participant_id)
-stage <- clinical[, c("participant_id", "stage_stage_best")]
-stage$stage <- stage$stage_stage_best
-stage[which(stage$stage == ""), "stage"] <- NA
-stage[which(stage$stage == "?"), "stage"] <- NA
-stage[which(stage$stage == "U"), "stage"] <- NA
-stage[which(stage$stage %in% c("1A", "1A_1", "1A3", "1A_3B_", "1A1", "1A2", "1A2", "1B")), "stage"] <- 1
-stage[which(stage$stage %in% c("2", "2A", "2B")), "stage"] <- 2
-stage[which(stage$stage %in% c("3", "3A", "3B", "3C")), "stage"] <- 3
-stage[which(stage$stage %in% c("4", "4A", "4B")), "stage"] <- 4
-stage$stage <- as.character(stage$stage)
-stage[stage$stage %in% c("1", "2", "3"), "stage_category"] <- "early"
-stage[stage$stage %in% c("4"), "stage_category"] <- "late"
-
-EGFR_gene_muts <- left_join(EGFR_gene_muts, stage)
-
-
-fit <- survfit(Surv(survival, status) ~ cluster2, data = EGFR_gene_muts[EGFR_gene_muts$histology %in% c("ADENOCARCINOMA", "SQUAMOUS_CELL")
-                                                                        & EGFR_gene_muts$stage_stage_best %in% c("1B", "2A", "3A", "2B") & EGFR_gene_muts$survival >= 90, ])
-p <- ggsurvplot(fit, data = EGFR_gene_muts[EGFR_gene_muts$histology %in% c("ADENOCARCINOMA", "SQUAMOUS_CELL")
-                                           & EGFR_gene_muts$stage_stage_best %in% c("1B", "2A", "3A", "2B") & EGFR_gene_muts$survival >= 90, ],
-                conf.int = TRUE,
-                pval = TRUE,
-                risk.table = TRUE,
-                palette = c("#0215de", "#a7cee3"))
-
-
-

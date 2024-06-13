@@ -61,11 +61,7 @@ all_split <- bind_rows(all_split)
 all_split <- all_split[, c(grep("AF", colnames(all_split), value = T), "ID")]
 all_split <- all_split[!is.na(all_split$AFR_AF) | !is.na(all_split$AMR_AF) | !is.na(all_split$EAS_AF) | !is.na(all_split$EUR_AF) | !is.na(all_split$SAS_AF), ]
 all_split <- unique(all_split)
-# all_split <- all_split %>% rowwise() %>% mutate(max_Af = max(AFR_AF, AMR_AF, AMR_AF, EUR_AF, SAS_AF))
-# 
-# # mark allele fraction smaller than 1%
-# all_split[all_split$max_Af <= 0.01, "pop_freq"] <- "rare"
-# all_split[all_split$max_Af > 0.01, "pop_freq"] <- "ubiquitous"
+
 
 # also split up the info from the original clinvar table
 clinvar <- unique(germline[, c("ID", "INFO")])

@@ -86,7 +86,7 @@ for(sig in unique(all_sigs$label)){
 }
 all_sigs_z <- do.call(rbind, all_sigs_z)
 
-# remove signatures present in less than 5% of tumours
+# remove signatures present in less than 3% of tumours
 signatures_to_keep <- c()
 for(sig in unique(all_sigs_z$label)){
 
@@ -127,33 +127,6 @@ signatures_to_keep <- as.character(signatures_to_keep)
 
 all_sigs_a <- all_sigs_z[all_sigs_z$label %in% signatures_to_keep, ]
 all_sigs_a <- all_sigs_z
-
-# z scaled weight
-# mat <- dcast(all_sigs_a, sample ~ label, value.var = "weight_z")
-# rownames(mat) <- mat$sample
-# mat$sample <- NULL
-# 
-# distance <- dist(mat, method = "euclidean")
-# cluster <- hclust(distance, method = "ward.D2")
-# 
-# cluster_assignment <- cutree(cluster, k = 17)
-# order_cluster <- cluster$labels[cluster$order]
-# 
-# # now remake the tile plot splitting up the clusters
-# cluster_assignment <- data.frame(cluster_assignment)
-# cluster_assignment$variable <- rownames(cluster_assignment)
-# 
-# # now we can make a tiled plot with this prder
-# all_sigs_inf_clust_order <- mat[order_cluster, ] 
-# all_sigs_inf_clust_order$sample <- rownames(all_sigs_inf_clust_order)
-# all_sigs_inf_clust_order <- melt(all_sigs_inf_clust_order)
-# all_sigs_inf_clust_order$sample <- factor(all_sigs_inf_clust_order$sample, levels = order_cluster)
-# all_sigs_inf_clust_order$variable <- factor(all_sigs_inf_clust_order$variable, levels = signature_order)
-# 
-# all_sigs_inf_clust_order <- left_join(all_sigs_inf_clust_order, cluster_assignment, by = c("sample" = "variable"))
-# all_sigs_inf_clust_order$cluster_assignment <- as.character(all_sigs_inf_clust_order$cluster_assignment)
-# all_sigs_inf_clust_order$cluster_assignment <- factor(all_sigs_inf_clust_order$cluster_assignment, unique(all_sigs_inf_clust_order$cluster_assignment))
-# all_sigs_inf_clust_order$sample <- factor(all_sigs_inf_clust_order$sample, levels = order_cluster)
 
 ##### 
 ##### 
@@ -205,8 +178,6 @@ cluster.assignment.bootstrap <- function(signatures_df = all_sigs_a,
     # now compare
     mean_relative_difference_merge <- readr::parse_number(all.equal(new_dendro, pruned_og_dendro)[2])
     mean_relative_difference_order <- readr::parse_number(all.equal(new_dendro, pruned_og_dendro)[4])
-    # robinson_foulds_distance       <- dist.dendlist(dendlist(as.dendrogram(new_dendro), as.dendrogram(pruned_og_dendro)))[1]
-    # baker_gamma_index              <- cor_bakers_gamma(new_dendro, pruned_og_dendro)
     cophenetic_distance            <- cor_cophenetic(new_dendro, pruned_og_dendro)
     FM_index                       <- FM_index(cutree(new_dendro, k = num_cluster), cutree(pruned_og_dendro, k = num_cluster))[1]
     
@@ -214,8 +185,6 @@ cluster.assignment.bootstrap <- function(signatures_df = all_sigs_a,
                                                  iteration = i,
                                                  mean_relative_difference_merge = mean_relative_difference_merge,
                                                  mean_relative_difference_order = mean_relative_difference_order,
-                                                 # robinson_foulds_distance = robinson_foulds_distance,
-                                                 # baker_gamma_index = baker_gamma_index,
                                                  cophenetic_distance = cophenetic_distance,
                                                  FM_index = FM_index)
     
@@ -409,76 +378,3 @@ pdf(paste0(output_path, "signature_cluster_robustness_bootstrap_jaccard_index.pd
 p_cluster_m
 dev.off()
 
-#########
-#  also do an elbow seach for k
-
-k.max <- 20
-data <- na.omit(og_mat)
-wss <- sapply(1:k.max, 
-              function(k){kmeans(data, k, nstart=50,iter.max = 1000 )$tot.withinss})
-
-plot(1:k.max, wss,
-     type="b", pch = 19, frame = FALSE, 
-     xlab="Number of clusters K",
-     ylab="Total within-clusters sum of squares")
-
-#########################
-# check the size of the clusters
-boostrap_sample_compare_all$number_of_clusters <- as.character(boostrap_sample_compare_all$number_of_clusters)
-boostrap_sample_compare_all$number_of_clusters <- factor(boostrap_sample_compare_all$number_of_clusters, levels = str_sort(c(1:20), numeric = T))
-
-cluster_size <- unique(boostrap_sample_compare_all[, c("number_of_clusters", "num_samples_old_cluster")])
-
-p_size <- ggplot(cluster_size, aes(number_of_clusters, num_samples_old_cluster)) +
-  geom_boxplot() +
-  geom_quasirandom() +
-  theme_bw()
-
-pdf(paste0(output_path, "signature_cluster_size.pdf"), width = 7, height = 3)
-p_size
-dev.off()
-
-
-
-################################################################################
-# z scaled weight
-mat <- dcast(all_sigs_a, sample ~ label, value.var = "weight_z")
-rownames(mat) <- mat$sample
-mat$sample <- NULL
-
-distance <- dist(mat, method = "euclidean")
-cluster <- hclust(distance, method = "ward.D2")
-
-cluster_assignment <- cutree(cluster, k = 10)
-order_cluster <- cluster$labels[cluster$order]
-
-# now remake the tile plot splitting up the clusters
-cluster_assignment <- data.frame(cluster_assignment)
-cluster_assignment$variable <- rownames(cluster_assignment)
-
-# now we can make a tiled plot with this prder
-all_sigs_inf_clust_order <- mat[order_cluster, ] 
-all_sigs_inf_clust_order$sample <- rownames(all_sigs_inf_clust_order)
-all_sigs_inf_clust_order <- melt(all_sigs_inf_clust_order)
-all_sigs_inf_clust_order$sample <- factor(all_sigs_inf_clust_order$sample, levels = order_cluster)
-all_sigs_inf_clust_order$variable <- factor(all_sigs_inf_clust_order$variable, levels = signature_order)
-
-# everything above 1 and below -1 gets made into 1.5
-# all_sigs_inf_clust_order[is.na(all_sigs_inf_clust_order)] <- 0
-all_sigs_inf_clust_order[which(all_sigs_inf_clust_order$value < -1), "value"] <- -1.5
-all_sigs_inf_clust_order[which(all_sigs_inf_clust_order$value > 1), "value"] <- 1.5
-
-all_sigs_inf_clust_order <- left_join(all_sigs_inf_clust_order, cluster_assignment, by = c("sample" = "variable"))
-all_sigs_inf_clust_order$cluster_assignment <- as.character(all_sigs_inf_clust_order$cluster_assignment)
-all_sigs_inf_clust_order$cluster_assignment <- factor(all_sigs_inf_clust_order$cluster_assignment, unique(all_sigs_inf_clust_order$cluster_assignment))
-all_sigs_inf_clust_order$sample <- factor(all_sigs_inf_clust_order$sample, levels = order_cluster)
-
-# make a prettier plot
-mat_t <- t(mat)
-colnames(mat_t) <- NULL
-mat_t <- as.matrix(mat_t)
-colnames(mat_t) <- NULL
-
-col_fun = colorRamp2(c(-1, 0, 1), c("#3f007d", "white", "#67000d"))
-
-heat <- Heatmap(mat_t, clustering_method_columns = "ward.D2", clustering_distance_columns = "euclidean", col = col_fun, column_split = 10, name = "signature\nweight")

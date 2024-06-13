@@ -36,14 +36,12 @@ load(signatures_path)
 
 # make into one data frame
 sig_df           <- rbind(SBS_exposure, DBS_exposure, ID_exposure, CN_exposure, SV_exposure)
-# sig_df           <- rbind(SBS_exposure, DBS_exposure, ID_exposure, CN_exposure, SV_exposure, MDS_exposure)
 
 sig_df[grep("SBS", sig_df$label), "signature_type"] <- "SBS"
 sig_df[grep("DBS", sig_df$label), "signature_type"] <- "DBS"
 sig_df[grep("ID", sig_df$label), "signature_type"] <- "ID"
 sig_df[grep("CN", sig_df$label), "signature_type"] <- "CN"
 sig_df[grep("SV", sig_df$label), "signature_type"] <- "SV"
-# sig_df[grep("MDS", sig_df$label), "signature_type"] <- "MDS"
 
 sig_df$signature_label <- sig_df$label
 
@@ -92,7 +90,6 @@ colour_pallette_DBS   <- c("#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854"
 colour_pallette_ID    <- c("#d53e4f", "#f46d43", "#fdae61", "#e6f598", "#66bd63", "#3288bd", "#053061", "#0c6624")
 colour_pallette_CN    <- c("#67000d","#a50026", "#d73027", "#f46d43", "#fdae61", "#fee090", "#ffff99", "#80cdc1", "#a8ddb5", "#e0f3f8", "#abd9e9", "#74add1", "#4575b4", "#313695", "#08306b")
 colour_pallette_SV    <- c("#bebada", "#fb8072", "#b3de69", "#8073ac", "#fccde5", "#97b1d1", "#bc80bd", "#ccebc5", "#fdc086", "#4eb3d3", "#238443")
-colour_pallette_MDS   <- c("#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5",  "#ffed6f")
 
 plot_sigs_df  <- sig_df[, c("patient", "signature", "weight", "exposure", "signature_type", "signature_label", "histology")]
 plot_sigs_df <- unique(plot_sigs_df)
@@ -244,27 +241,6 @@ g$heights[id_panels_h] <- grid::unit(c(2, 3, 3, 3, 3, 3), "null")
 id_panels_w <- unique(g$layout[grep("panel", g$layout$name), "l"])
 g$widths[id_panels_w] <- grid::unit(c(9, 2, 9, 2, 2, 2, 2, 2, 2, 2, 2, 2), "null")
 
-# change the legend size
-# is_legend <- which(g$layout$name == "guide-box")
-# legend <- g$grobs[is_legend][[2]]
-# legend <- legend$grobs[legend$layout$name == "guides"][[1]]
-# 
-# # Set widths in guide gtable
-# width <- as.numeric(legend$widths[4]) # save bar width (assumes 'cm' unit) 
-# legend$widths[4] <- unit(20, "null") # replace bar width
-# 
-# # Set width/x of bar/labels/ticks. Assumes everything is 'cm' unit.
-# legend$grobs[[2]]$width <- unit(20, "npc")
-# legend$grobs[[3]]$children[[1]]$x <- unit(
-#   as.numeric(legend$grobs[[3]]$children[[1]]$x) / width, "npc"
-# )
-# legend$grobs[[5]]$x0 <- unit(as.numeric(legend$grobs[[5]]$x0) / width, "npc")
-# legend$grobs[[5]]$x1 <- unit(as.numeric(legend$grobs[[5]]$x1) / width, "npc")
-
-# Replace legend
-# g$grobs[[is_legend]] <- legend
-
-
 
 pdf(paste0(output_path, "hdp_primary_met_MutationalSignatures_consensus_overview_weights.pdf"), width = 26, height = 14)
 grid::grid.draw(g)
@@ -275,101 +251,3 @@ grid::grid.draw(g)
 dev.off()
 
  
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# # weights small
-# p_SBS_burden <- ggplot(SBS_burden, aes(x = sample, y = value, color = variable)) + 
-#   geom_point(size = 0.3) + 
-#   theme_bw() + 
-#   xlab("") +
-#   ylab("log10 mutation burden") +
-#   scale_y_log10() +
-#   scale_color_manual(values = c("SBS_burden" = "#d7191c",
-#                                 "DBS_burden" = "#fdae61",
-#                                 "ID_burden" = "#80cdc1",
-#                                 "SV_burden" = "#5e3c99")) +
-#   theme(panel.grid.minor = element_blank(),
-#         panel.grid.major = element_blank(),
-#         axis.text.x = element_blank(),
-#         axis.ticks.x = element_blank(),
-#         axis.text.y = element_text(size = 15),
-#         axis.title.y = element_text(size = 17),
-#         strip.text.x = element_text(size = 17),
-#         strip.background = element_rect(fill = 'white'),
-#         panel.spacing = unit(0.2, 'lines')) +
-#   facet_grid(.~histology, scales = "free", labeller = labeller(histology = histology_names))
-# 
-# p_sig_weight <- ggplot(plot_sigs_df, aes(x = patient, y = weight, fill = signature)) + 
-#   geom_bar(stat = 'identity', position = position_stack(reverse = T)) + 
-#   scale_fill_manual(values = c(colour_pallette_SBS, colour_pallette_MDS, colour_pallette_DBS, colour_pallette_ID, colour_pallette_CN, colour_pallette_SV)) +
-#   ylab("signature weight") +
-#   xlab("tumour") +
-#   theme_bw() + 
-#   theme(panel.grid.minor = element_blank(),
-#         panel.grid.major = element_blank(),
-#         axis.text.x = element_blank(),
-#         axis.ticks.x = element_blank(),
-#         strip.text.x = element_blank(),
-#         axis.title.x = element_text(size = 17),
-#         axis.text.y = element_text(size = 15),
-#         axis.title.y = element_text(size = 17),
-#         strip.text.y = element_text(size = 15),
-#         strip.background.y = element_rect(fill = 'white'),
-#         strip.background.x = element_blank(),
-#         panel.spacing = unit(0.2, 'lines')) +
-#   facet_grid(signature_type~histology, scales = "free", labeller = labeller(histology = histology_names))
-# 
-# #exclude legends from original plots
-# p_SBS_burden            <- p_SBS_burden + theme(legend.position = 'none')
-# p_sig_weight            <- p_sig_weight + theme(legend.position = 'bottom')
-# 
-# #combine both
-# p_SBS_burden          <- ggplotGrob(p_SBS_burden        + theme(plot.margin = unit(c(0.1, -10, 0.1, 0.1), "cm")))
-# p_sig_weight          <- ggplotGrob(p_sig_weight        + theme(plot.margin = unit(c(0.1, -10, 0.1, 0.1), "cm")))
-# 
-# p_SBS_burden$widths         <- grid::unit.pmax(p_SBS_burden$widths, p_sig_weight$widths)
-# p_sig_weight$widths         <- grid::unit.pmax(p_SBS_burden$widths, p_sig_weight$widths)
-# 
-# 
-# g <- gtable_rbind(p_SBS_burden, p_sig_weight)
-# 
-# #change colours and labels of strips
-# colours <- c("ADENOCARCINOMA" = "#67001f",
-#              "MET_ADENOCARCINOMA" = "#67001f80",
-#              "SQUAMOUS_CELL" = "#053061",
-#              "MET_SQUAMOUS_CELL" = "#05306180",
-#              "MESOTHELIOMA" = "#e3309e",
-#              "SMALL_CELL" = "#b89704",
-#              "MET_SMALL_CELL" = "#b8970480",
-#              "LARGE_CELL" = "#54278f",
-#              "OTHER" = "#7a7979",
-#              "CARCINOID" = "#fc8d62",
-#              "ADENOSQUAMOUS" = "#66c2a5",
-#              "NEUROENDOCRINE_CARCINOMA" = "#0b8ca3",
-#              "MET_OTHER" = "#7a797980")
-# 
-# strip_name_colours <- c("white", "black", "white", "black", "black",  "black", "black", "white", "black", "black", "black", "black", "black")
-# 
-# stript      <- which(grepl('strip-t', g$layout$name))[1:length(unique(SBS_burden$histology))]
-# k <- 1
-# for (i in stript) {
-#   j <- which(grepl('rect', g$grobs[[i]]$grobs[[1]]$childrenOrder))
-#   g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$fill <- colours[k]
-#   g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$col  <- colours[k]
-#   
-#   t <- which(grepl('text', g$grobs[[i]]$grobs[[1]]$childrenOrder))
-#   g$grobs[[i]]$grobs[[1]]$children[[t]]$children[[1]]$gp$col <- strip_name_colours[k]
-#   
-#   k <- k+1
-# }
-# 
-# id_panels_h <- unique(g$layout[grep("panel", g$layout$name), "t"])
-# g$heights[id_panels_h] <- grid::unit(c(1, 3, 3, 3, 3, 3, 3), "null")
-# 
-# pdf(paste0(output_path, "MutationalSignatures_consensus_overview_weights_small.pdf"), width = 36, height = 20)
-# grid::grid.draw(g)
-# dev.off()
-# 
-# png(paste0(output_path, "MutationalSignatures_consensus_overview_weights_small.png"), width = 50, height = 24, unit = "cm", res = 150)
-# grid::grid.draw(g)
-# dev.off()
-# 

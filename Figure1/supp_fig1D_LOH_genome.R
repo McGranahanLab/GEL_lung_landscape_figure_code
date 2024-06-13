@@ -46,8 +46,6 @@ cn$seg_length <- cn$endpos - cn$startpos
 loh_frac <- cn %>% group_by(patient, LOH, haploidLOH) %>% summarise(loh_sum = sum(seg_length))
 loh_frac$LOH_status <- paste0(loh_frac$LOH, "_", loh_frac$haploidLOH  )
 
-# loh_frac <- loh_frac[-which(loh_frac$LOH == TRUE & loh_frac$haploidLOH == TRUE), ]
-# loh_frac <- loh_frac[-which(loh_frac$LOH == FALSE & loh_frac$haploidLOH == FALSE), ]
 
 # some are missing, fill those in
 

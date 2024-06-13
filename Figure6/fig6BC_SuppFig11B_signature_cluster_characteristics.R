@@ -120,14 +120,13 @@ for(sig in unique(all_sigs$label)){
   
   df <- all_sigs[all_sigs$label == sig, ]
   df$weight_z <- scale(df$weight)
-  # df$exposure_z <- scale(log10(df$exposure +1))
   
   all_sigs_z[[sig]] <- df
   
 }
 all_sigs_z <- do.call(rbind, all_sigs_z)
 
-# remove signatures present in less than 5% of tumours
+# remove signatures present in less than 3% of tumours
 signatures_to_keep <- c()
 for(sig in unique(all_sigs_z$label)){
   
@@ -1294,9 +1293,6 @@ age_df <- sample_table[, c("participant_id", "patient_age")]
 age_df <- left_join(cluster_assignment, age_df, by = c("variable" = "participant_id"))
 age_df$cluster_assignment <- as.character(age_df$cluster_assignment)
 
-# ggplot(age_df,  aes(cluster_assignment, patient_age)) +
-#   geom_boxplot()+
-#   stat_compare_means()
 
 age_df <- age_df %>% group_by(cluster_assignment) %>% mutate(mean = median(patient_age, na.rm = T))
 age_df <- unique(age_df[,c("cluster_assignment", "mean")])
@@ -1678,10 +1674,7 @@ treat_count$treatment <- factor(treat_count$treatment, levels = rev(c("chemo", "
 treat_count$cluster_assignment <- factor(treat_count$cluster_assignment, levels = c(1:num_clusters))
 
 plot_treatment <- ggplot(treat_count, aes(cluster_assignment, prop, fill = treatment))+
-  # geom_quasirandom(alpha = 0.5) + 
   geom_bar(stat = "identity") +
-  # scale_y_log10(expand = c(0,0)) +
-  # stat_compare_means(label.y = 7, label.x = 2) +
   scale_fill_manual(breaks = rev(c("chemo", "RT", "chemo_and_RT", "no_prior_treatment")),
                     labels = rev(c("chemotherapy", "radiotherapy", "chemo- and\nradiotherapy", "no prior\ntreatment")),
                     values = rev(c("#ffeda0", "#feb24c", "#f03b20", "white"))) +
@@ -1830,28 +1823,3 @@ dev.off()
 pdf(paste0(output_path, "clustering/ALL_new/signature_cluster_characteristics_heatmap_LEGEND.pdf"), width = 12, height = 12)
 all_legend
 dev.off()
-
-
-# make all the data going into this plot into one data frame
-
-all_data <- list(gene_test,
-                 SV_gene_test,
-                 CN_gene_test,
-                 germ_gene_test,
-                 tcra,
-                 tcrb,
-                 hist_count,
-                 clust_size,
-                 time_point,
-                 smok_count,
-                 SNV_ITH,
-                 WGD_df,
-                 age_df,
-                 sex_df,
-                 mutburden_df,
-                 stage,
-                 LOHHLA_ct,
-                 driver_count_mean,
-                 prop_no_drivers,
-                 treat_count,
-                 smoking_exposure)

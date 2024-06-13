@@ -113,7 +113,6 @@ plot_hist <- ggplot(data = hist, aes(x = count, y = histology, fill = histology)
                   facet_grid(histology ~ ., scales = "free", labeller = labeller(histology = histology_names), switch = "y") +
                   xlab("# samples") +
                   ylab("") +
-                  # xlim(0, 530) +
                   theme_classic() +
                   theme(axis.title.x = element_text(size = 14),
                         axis.title.y = element_text(size = 14),
@@ -135,7 +134,6 @@ plot_sex <- ggplot(sex, aes(prop, histology, fill = sex)) +
                 geom_bar(stat = "identity") +
                 scale_fill_manual(values = c("lightblue", "lightpink"), breaks = c("MALE", "FEMALE"), label = c("male", "female"), name = "sex") +
                 scale_x_continuous(expand = c(0,0), name = "% tumours") +
-                # scale_y_continuous(expand = c(0,0)) +
                 facet_grid(histology ~ ., scales = "free") +
                 theme_bw() +
                 theme(axis.text.y = element_blank(),
@@ -164,7 +162,6 @@ plot_stage <- ggplot(stage, aes(prop, histology, fill = stage)) +
                                                   "#41b6c4",
                                                   "#225ea8")) +
                     scale_x_continuous(expand = c(0,0), name = "% tumours") +
-                    # scale_y_continuous(expand = c(0,0)) +
                     facet_grid(histology ~ ., scales = "free") +
                     theme_bw() +
                     theme(axis.text.y = element_blank(),
@@ -190,7 +187,6 @@ plot_surgery <- ggplot(surgery, aes(prop, histology, fill = surgery)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values = c("#b5b5b5" , "#5ab4ac")) +
   scale_x_continuous(expand = c(0,0), name = "% tumours") +
-  # scale_y_continuous(expand = c(0,0)) +
   facet_grid(histology ~ ., scales = "free") +
   theme_bw() +
   theme(axis.text.y = element_blank(),
@@ -216,7 +212,6 @@ plot_chemo <- ggplot(chemo, aes(prop, histology, fill = hadCHEMO)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values = c("#b5b5b5" , "#ca0020")) +
   scale_x_continuous(expand = c(0,0), name = "% tumours") +
-  # scale_y_continuous(expand = c(0,0)) +
   facet_grid(histology ~ ., scales = "free") +
   theme_bw() +
   theme(axis.text.y = element_blank(),
@@ -242,7 +237,6 @@ plot_RT <- ggplot(RT, aes(prop, histology, fill = hadRT)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values = c("#b5b5b5" , "#fdae61")) +
   scale_x_continuous(expand = c(0,0), name = "% tumours") +
-  # scale_y_continuous(expand = c(0,0)) +
   facet_grid(histology ~ ., scales = "free") +
   theme_bw() +
   theme(axis.text.y = element_blank(),
